@@ -5,12 +5,14 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "resetdb": "node -e \"require('fs').rmSync('./localfin.sqlite',{force:true}); console.log('deleted');\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "better-sqlite3": "^12.5.0",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "nodemon": "^3.1.11"
