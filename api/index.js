@@ -9,7 +9,7 @@ app.use(express.json());
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-app.get("/categories", (req, res) => {
+app.get("/api/categories", (req, res) => {
   res.json(CATEGORIES);
 });
 
