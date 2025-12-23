@@ -13,6 +13,16 @@ app.get("/api/categories", (req, res) => {
   res.json(CATEGORIES);
 });
 
+app.get("/api/expenses/range", (req, res) => {
+  const row = db
+    .prepare(`SELECT MIN(date) AS minDate, MAX(date) AS maxDate FROM expenses`)
+    .get();
+
+  // if table empty => both null
+  res.json({ minDate: row?.minDate ?? null, maxDate: row?.maxDate ?? null });
+});
+
+
 app.post("/expenses", (req, res) => {
   const { date, amount, paidFor, category, note = "" } = req.body;
 
@@ -30,12 +40,26 @@ app.post("/expenses", (req, res) => {
 });
 
 app.get("/expenses", (req, res) => {
-  const rows = db
-    .prepare(`SELECT * FROM expenses ORDER BY date DESC, id DESC`)
-    .all();
+  const { month } = req.query; // "YYYY-MM"
+
+  let rows;
+  if (month) {
+    rows = db
+      .prepare(
+        `SELECT * FROM expenses
+         WHERE date LIKE ?
+         ORDER BY date DESC, id DESC`
+      )
+      .all(`${month}-%`);
+  } else {
+    rows = db
+      .prepare(`SELECT * FROM expenses ORDER BY date DESC, id DESC`)
+      .all();
+  }
 
   res.json(rows);
 });
+
 
 
 const PORT = process.env.PORT || 4000;
