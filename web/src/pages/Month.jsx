@@ -8,14 +8,8 @@ import {
   Stack,
   Typography,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  MenuItem,
 } from "@mui/material";
-
+import AddExpenseDialog from "../components/AddExpenseDialog";
 
 const API_BASE = "http://localhost:4000";
 const PAID_FOR = ["ido", "yuli", "both"];
@@ -34,8 +28,7 @@ export default function MonthPage({ monthKey }) {
   const [items, setItems] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     if (!monthKey) return;
@@ -76,9 +69,22 @@ export default function MonthPage({ monthKey }) {
       {!loading && !error && items.length === 0 && (
         <Typography color="text.secondary">No expenses this month.</Typography>
       )}
-      <Button variant="contained">
+      <Button variant="contained" onClick={() => setAddOpen(true)}>
         Add expense
       </Button>
+      <AddExpenseDialog
+        open={addOpen}
+        monthKey={monthKey}
+        onClose={() => setAddOpen(false)}
+        onAdded={() => {
+          setLoading(true);
+          fetch(`${API_BASE}/expenses?month=${encodeURIComponent(monthKey)}`)
+            .then((r) => r.json())
+            .then(setItems)
+            .finally(() => setLoading(false));
+        }}
+      />
+    
       <Stack spacing={1.5}>
         {items.map((e) => (
           <Card key={e.id} variant="outlined">
@@ -88,7 +94,6 @@ export default function MonthPage({ monthKey }) {
                 justifyContent="space-between"
                 alignItems="center"
               >
-
                 <Stack spacing={0.5}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Typography sx={{ fontWeight: 700 }}>
