@@ -28,7 +28,7 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
 
   // load categories once
   useEffect(() => {
-    fetch(`${API_BASE}/categories`)
+    fetch(`${API_BASE}/api/categories`)
       .then((r) => r.json())
       .then((cats) => {
         setCategories(cats);
