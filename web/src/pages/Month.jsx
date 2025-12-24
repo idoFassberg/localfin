@@ -14,6 +14,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddExpenseDialog from "../components/AddExpenseDialog";
 import ExpenseSummaryCard from "../components/ExpenseSummaryCard";
+import { useEffect as useEffectUsers } from 'react';
 import { CATEGORY_ICON } from "../constants/categoryIcons";
 
 const API_BASE = "http://localhost:4000";
@@ -52,10 +53,17 @@ export default function MonthPage({ monthKey }) {
       .finally(() => setLoading(false));
   }, [monthKey]);
 
-  const total = useMemo(
-    () => items.reduce((sum, e) => sum + Number(e.amount || 0), 0),
-    [items]
-  );
+  const [users, setUsers] = useState([]);
+  useEffectUsers(() => {
+    fetch(`${API_BASE}/api/users`)
+      .then((r) => r.json())
+      .then(setUsers);
+  }, []);
+
+  const userExpenses = users.map(user => ({
+    user,
+    items: items.filter(e => e.paid_for === user.name)
+  }));
 
   async function handleDelete(id) {
     if (!window.confirm('Delete this expense?')) return;
@@ -77,7 +85,12 @@ export default function MonthPage({ monthKey }) {
       {!loading && !error && items.length === 0 && (
         <Typography color="text.secondary">No expenses this month.</Typography>
       )}
-      <ExpenseSummaryCard items={items} />
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+        <ExpenseSummaryCard items={items} title="All Users" />
+        {userExpenses.map(({ user, items }) => (
+          <ExpenseSummaryCard key={user.id} items={items} title={user.name} color={user.color} />
+        ))}
+      </Stack>
       <Button variant="contained" onClick={() => setAddOpen(true)}>
         Add expense
       </Button>
@@ -150,7 +163,7 @@ export default function MonthPage({ monthKey }) {
 
                 <Stack direction="row" alignItems="center" spacing={1}>
                   <Typography sx={{ fontWeight: 800 }}>
-                    ₪{Number(e.amount).toFixed(2)}
+                    {Number(e.amount)} ₪
                   </Typography>
                   <IconButton size="small" color="error" onClick={() => handleDelete(e.id)}>
                     <DeleteIcon fontSize="small" />

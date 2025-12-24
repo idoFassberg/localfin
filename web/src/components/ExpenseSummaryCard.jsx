@@ -10,7 +10,7 @@ import {
 import { PieChart, pieArcLabelClasses } from "@mui/x-charts/PieChart";
 import { CATEGORY_ICON } from "../constants/categoryIcons";
 
-export default function ExpenseSummaryCard({ items = [] }) {
+export default function ExpenseSummaryCard({ items = [], title = "This month by category", color }) {
   const totalsByCategory = items.reduce((acc, e) => {
     const cat = e.category || "Other";
     const amount = Number(e.amount || 0);
@@ -25,18 +25,18 @@ export default function ExpenseSummaryCard({ items = [] }) {
   const monthTotal = entries.reduce((sum, x) => sum + x.total, 0);
 
   return (
-    <Card variant="outlined" sx={{ mb: 2 }}>
+    <Card variant="outlined" sx={{ mb: 2, borderColor: color || undefined }}>
       <CardContent>
         <Stack
           direction="row"
           alignItems="baseline"
           justifyContent="space-between"
         >
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            This month by category
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: color || undefined }}>
+            {title}
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 900 }}>
-            ₪{monthTotal.toFixed(2)}
+          <Typography variant="h6" sx={{ fontWeight: 900, color: color || undefined }}>
+            {monthTotal} ₪
           </Typography>
         </Stack>
 
@@ -46,24 +46,22 @@ export default function ExpenseSummaryCard({ items = [] }) {
           <Typography color="text.secondary">No expenses yet.</Typography>
         ) : (
           <>
-            <Box sx={{ width: 260, mx: "auto", my: 2 }}>
+            <Box sx={{ width: 300, mx: "auto", my: 2 }}>
               <PieChart
                 series={[
                   {
                     data: entries.map(({ category, total }) => ({
                       id: category,
                       value: total,
-                      label: category,
                       color: CATEGORY_ICON[category]?.color,
                     })),
-                    // remove arcLabel
-                    innerRadius: 60, // donut = modern
+                    innerRadius: 60,
                     paddingAngle: 2,
                     cornerRadius: 6,
                   },
                 ]}
                 slotProps={{
-                  legend: { hidden: true }, // hide the default legend
+                  legend: { hidden: true },
                 }}
                 width={260}
                 height={260}
@@ -73,7 +71,7 @@ export default function ExpenseSummaryCard({ items = [] }) {
               {entries.map(({ category, total }) => (
                 <Box key={category}>
                   <Chip
-                    label={`${category}  ₪${total.toFixed(2)}`}
+                    label={`${category}  ₪${total}`}
                     variant="filled"
                     sx={{
                       fontWeight: 600,
