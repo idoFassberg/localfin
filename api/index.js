@@ -60,7 +60,10 @@ app.get("/expenses", (req, res) => {
   res.json(rows);
 });
 
-
+app.use((err, req, res, next) => {
+  console.error("[UNHANDLED]", err);
+  res.status(500).json({ error: "Internal server error" });
+});
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
