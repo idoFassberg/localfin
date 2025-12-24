@@ -11,10 +11,12 @@ import {
 } from "@mui/material";
 
 const API_BASE = "http://localhost:4000";
-const PAID_FOR = ["ido", "yuli", "both"];
+
+
 
 export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
   const [categories, setCategories] = useState([]);
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -22,11 +24,12 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
     date: "",
     amount: "",
     category: "",
-    paidFor: "both",
+    paidFor: "",
     note: "",
   });
 
-  // load categories once
+
+  // load categories and users once
   useEffect(() => {
     fetch(`${API_BASE}/api/categories`)
       .then((r) => r.json())
@@ -35,6 +38,14 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
         setForm((f) => ({ ...f, category: cats[0] || "" }));
       })
       .catch(() => setError("Failed to load categories"));
+
+    fetch(`${API_BASE}/api/users`)
+      .then((r) => r.json())
+      .then((users) => {
+        setUsers(users);
+        setForm((f) => ({ ...f, paidFor: users[0]?.name || "" }));
+      })
+      .catch(() => setError("Failed to load users"));
   }, []);
 
   // default date when month changes
@@ -123,9 +134,12 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
           value={form.paidFor}
           onChange={(e) => setForm({ ...form, paidFor: e.target.value })}
         >
-          {PAID_FOR.map((p) => (
-            <MenuItem key={p} value={p}>
-              {p}
+          {users.map((u) => (
+            <MenuItem key={u.id} value={u.name}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 16, height: 16, borderRadius: '50%', background: u.color, display: 'inline-block', border: '1px solid #888' }} />
+                {u.name}
+              </span>
             </MenuItem>
           ))}
         </TextField>

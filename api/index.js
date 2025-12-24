@@ -1,3 +1,4 @@
+
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
@@ -26,8 +27,10 @@ app.get("/api/expenses/range", (req, res) => {
 app.post("/expenses", (req, res) => {
   const { date, amount, paidFor, category, note = "" } = req.body;
 
-  if (!date || typeof amount !== "number" || !PAID_FOR.includes(paidFor) || !CATEGORIES.includes(category)) {
-    return res.status(400).json({ error: "Invalid input" });
+  // Validate user exists
+  const user = db.prepare('SELECT * FROM users WHERE name = ?').get(paidFor);
+  if (!date || typeof amount !== "number" || !user || !CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: "Invalid input or user does not exist" });
   }
 
   const stmt = db.prepare(`
@@ -59,6 +62,49 @@ app.get("/expenses", (req, res) => {
 
   res.json(rows);
 });
+
+app.post("/api/users", (req, res) => {
+  const { name, color } = req.body;
+  if (!name || !color) {
+    return res.status(400).json({ error: "Name and color are required" });
+  }
+  const stmt = db.prepare(`INSERT INTO users (name, color) VALUES (?, ?)`);
+  const info = stmt.run(name, color);
+  res.json({ id: info.lastInsertRowid });
+});
+
+app.get("/api/users", (req, res) => {
+  const users = db.prepare("SELECT * FROM users ORDER BY id DESC").all();
+  res.json(users);
+});
+
+app.delete('/expenses/:id', (req, res) => {
+  const { id } = req.params;
+  const info = db.prepare('DELETE FROM expenses WHERE id = ?').run(id);
+  if (info.changes === 0) {
+    return res.status(404).json({ error: 'Expense not found' });
+  }
+  res.json({ ok: true });
+});
+
+app.put('/expenses/:id', (req, res) => {
+  const { id } = req.params;
+  const { date, amount, paidFor, category, note = "" } = req.body;
+  // Validate user exists
+  const user = db.prepare('SELECT * FROM users WHERE name = ?').get(paidFor);
+  if (!date || typeof amount !== "number" || !user || !CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: "Invalid input or user does not exist" });
+  }
+  const info = db.prepare(`
+    UPDATE expenses SET date = ?, amount = ?, paid_for = ?, category = ?, note = ? WHERE id = ?
+  `).run(date, amount, paidFor, category, note, id);
+  if (info.changes === 0) {
+    return res.status(404).json({ error: 'Expense not found' });
+  }
+  res.json({ ok: true });
+});
+
+
 
 app.use((err, req, res, next) => {
   console.error("[UNHANDLED]", err);

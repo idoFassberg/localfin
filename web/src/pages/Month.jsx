@@ -8,7 +8,10 @@ import {
   Stack,
   Typography,
   Button,
+  IconButton,
 } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import AddExpenseDialog from "../components/AddExpenseDialog";
 import ExpenseSummaryCard from "../components/ExpenseSummaryCard";
 import { CATEGORY_ICON } from "../constants/categoryIcons";
@@ -31,6 +34,7 @@ export default function MonthPage({ monthKey }) {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [editId, setEditId] = useState(null); // for future edit dialog
 
   useEffect(() => {
     if (!monthKey) return;
@@ -52,6 +56,12 @@ export default function MonthPage({ monthKey }) {
     () => items.reduce((sum, e) => sum + Number(e.amount || 0), 0),
     [items]
   );
+
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this expense?')) return;
+    await fetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
+    setItems(items => items.filter(e => e.id !== id));
+  }
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -138,9 +148,17 @@ export default function MonthPage({ monthKey }) {
                   ) : null}
                 </Stack>
 
-                <Typography sx={{ fontWeight: 800 }}>
-                  ₪{Number(e.amount).toFixed(2)}
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography sx={{ fontWeight: 800 }}>
+                    ₪{Number(e.amount).toFixed(2)}
+                  </Typography>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(e.id)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" color="primary" onClick={() => setEditId(e.id)}>
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
               </Stack>
 
               <Divider sx={{ mt: 1.25, opacity: 0.4 }} />
