@@ -18,9 +18,10 @@ import {
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, NavLink } from "react-router-dom";
 import ListItemButton from "@mui/material/ListItemButton";
-import { NavLink } from "react-router-dom";
+import PeopleIcon from '@mui/icons-material/People';
+import Users from './pages/Users';
 
 
 const darkTheme = createTheme({
@@ -100,6 +101,26 @@ function App() {
                 <ListItemText primary="Statistics" />
               </ListItemButton>
             </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                component={NavLink}
+                to="/users"
+                sx={{
+                  '&.active': {
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '& .MuiListItemIcon-root': {
+                      color: 'primary.contrastText',
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <PeopleIcon />
+                </ListItemIcon>
+                <ListItemText primary="Users" />
+              </ListItemButton>
+            </ListItem>
           </List>
         </Drawer>
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
@@ -107,6 +128,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/stats" element={<Statistics />} />
+            <Route path="/users" element={<Users />} />
           </Routes>
         </Box>
       </Box>
