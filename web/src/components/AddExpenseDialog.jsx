@@ -39,11 +39,29 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Box,
+  IconButton,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+
+
 
 const API_BASE = "http://localhost:4000";
 
 export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
+
+    async function handleDeleteSavedExpense(id) {
+      if (!window.confirm("Delete this saved expense?")) return;
+      const res = await fetch(`${API_BASE}/api/saved-expenses/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        // Refresh the list from the server to avoid 404s and keep in sync
+        fetch(`${API_BASE}/api/saved-expenses`)
+          .then((r) => r.json())
+          .then(setSavedExpenses)
+          .catch(() => setError("Failed to load saved expenses"));
+      } else {
+        alert("Failed to delete saved expense (may have already been deleted)");
+      }
+    }
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
@@ -206,7 +224,13 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
           >
             {categories.map((cat) => (
               <MenuItem key={cat.id} value={cat.name}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
                   <span style={{ fontSize: "1.2em" }}>{cat.emoji}</span>
                   {cat.name}
                 </span>
@@ -267,6 +291,8 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
                 <Box
                   key={se.id}
                   sx={{
+                    display: "flex",
+                    alignItems: "center",
                     border:
                       se.id === selectedSavedId
                         ? "2px solid #1976d2"
@@ -290,17 +316,31 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
                     }));
                   }}
                 >
-                  <Typography>
-                    <b>Category:</b> {se.category}
-                  </Typography>
-                  <Typography>
-                    <b>Paid for:</b> {se.paidfor}
-                  </Typography>
-                  {se.note && (
+                  <Box sx={{ flex: 1 }}>
                     <Typography>
-                      <b>Note:</b> {se.note}
+                      <b>Category:</b>{" "}
+                      {se.emoji ? `${se.emoji} ${se.category}` : se.category}
                     </Typography>
-                  )}
+                    <Typography>
+                      <b>Paid for:</b> {se.paidfor}
+                    </Typography>
+                    {se.note && (
+                      <Typography>
+                        <b>Note:</b> {se.note}
+                      </Typography>
+                    )}
+                  </Box>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    sx={{ ml: 1 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteSavedExpense(se.id);
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
                 </Box>
               ))
             )}

@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
@@ -116,7 +115,22 @@ app.post("/api/saved-expenses", (req, res) => {
 // Get all saved expenses
 app.get("/api/saved-expenses", (req, res) => {
   const rows = db.prepare("SELECT * FROM saved_expenses ORDER BY id DESC").all();
-  res.json(rows);
+  // For each saved expense, find the emoji from the categories table
+  const withEmoji = rows.map((row) => {
+    const cat = db.prepare("SELECT emoji FROM categories WHERE name = ?").get(row.category);
+    return { ...row, emoji: cat ? cat.emoji : "" };
+  });
+  res.json(withEmoji);
+});
+
+// Delete a saved expense
+app.delete("/api/saved-expenses/:id", (req, res) => {
+  const { id } = req.params;
+  const info = db.prepare("DELETE FROM saved_expenses WHERE id = ?").run(id);
+  if (info.changes === 0) {
+    return res.status(404).json({ error: "Saved expense not found" });
+  }
+  res.json({ ok: true });
 });
 
 // ------------------ Category CRUD endpoints ------------------
