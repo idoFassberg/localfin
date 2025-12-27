@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { LineChart } from "@mui/x-charts/LineChart";
-import { CATEGORY_ICON } from "../constants/categoryIcons";
 
 const API_BASE = "http://localhost:4000";
 
@@ -14,8 +13,14 @@ function toMonthKey(dateStr) {
 
 export default function Statistics() {
   const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  useEffect(() => {
+    fetch(`${API_BASE}/api/categories`)
+      .then((r) => r.json())
+      .then(setCategories);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -57,11 +62,14 @@ export default function Statistics() {
     const monthsSorted = Array.from(monthSet).sort(); // YYYY-MM sorts correctly
     const catsSorted = Array.from(catSet).sort();
 
-    const chartSeries = catsSorted.map((cat) => ({
-      label: cat,
-      data: monthsSorted.map((m) => Number(totals[cat]?.[m] ?? 0)), // <-- missing month/category => 0
-      color: CATEGORY_ICON[cat]?.color,
-    }));
+    const chartSeries = catsSorted.map((cat) => {
+      const catObj = categories.find((c) => c.name === cat || `${c.emoji} ${c.name}` === cat);
+      return {
+        label: cat,
+        data: monthsSorted.map((m) => Number(totals[cat]?.[m] ?? 0)),
+        color: catObj?.color || undefined,
+      };
+    });
 
     return { months: monthsSorted, series: chartSeries };
   }, [items]);

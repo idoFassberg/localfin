@@ -8,9 +8,9 @@ import {
   Box,
 } from "@mui/material";
 import { PieChart, pieArcLabelClasses } from "@mui/x-charts/PieChart";
-import { CATEGORY_ICON } from "../constants/categoryIcons";
+import { useEffect } from "react";
 
-export default function ExpenseSummaryCard({ items = [], title = "This month by category", color }) {
+export default function ExpenseSummaryCard({ items = [], title = "This month by category", color, categories = [] }) {
   const totalsByCategory = items.reduce((acc, e) => {
     const cat = e.category || "Other";
     const amount = Number(e.amount || 0);
@@ -50,11 +50,14 @@ export default function ExpenseSummaryCard({ items = [], title = "This month by 
               <PieChart
                 series={[
                   {
-                    data: entries.map(({ category, total }) => ({
-                      id: category,
-                      value: total,
-                      color: CATEGORY_ICON[category]?.color,
-                    })),
+                    data: entries.map(({ category, total }) => {
+                      const cat = categories.find((c) => c.name === category);
+                      return {
+                        id: category,
+                        value: total,
+                        color: cat?.color || "#9e9e9e",
+                      };
+                    }),
                     innerRadius: 60,
                     paddingAngle: 2,
                     cornerRadius: 6,
@@ -68,19 +71,22 @@ export default function ExpenseSummaryCard({ items = [], title = "This month by 
               />
             </Box>
             <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-              {entries.map(({ category, total }) => (
-                <Box key={category}>
-                  <Chip
-                    label={`${category}  ₪${total}`}
-                    variant="filled"
-                    sx={{
-                      fontWeight: 600,
-                      background: CATEGORY_ICON[category]?.color || "#9e9e9e",
-                      color: "#fff",
-                    }}
-                  />
-                </Box>
-              ))}
+              {entries.map(({ category, total }) => {
+                const cat = categories.find((c) => c.name === category);
+                return (
+                  <Box key={category}>
+                    <Chip
+                      label={`${category}  ₪${total}`}
+                      variant="filled"
+                      sx={{
+                        fontWeight: 600,
+                        background: cat?.color || "#9e9e9e",
+                        color: "#fff",
+                      }}
+                    />
+                  </Box>
+                );
+              })}
             </Stack>
           </>
         )}

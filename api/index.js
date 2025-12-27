@@ -25,7 +25,7 @@ app.post("/expenses", (req, res) => {
 
   // Validate user exists
   const user = db.prepare('SELECT * FROM users WHERE name = ?').get(paidFor);
-  if (!date || typeof amount !== "number" || !user || !CATEGORIES.includes(category)) {
+  if (!date || typeof amount !== "number" || !user) {
     return res.status(400).json({ error: "Invalid input or user does not exist" });
   }
 

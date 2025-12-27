@@ -130,6 +130,7 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
   async function onSaveExpense() {
     if (!form.category || !form.paidFor)
       return alert("Category and Paid for are required");
+    console.log("Saving expense:", form);
     setSaving(true);
     try {
       const r = await fetch(`${API_BASE}/api/saved-expenses`, {

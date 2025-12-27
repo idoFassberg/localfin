@@ -15,7 +15,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import AddExpenseDialog from "../components/AddExpenseDialog";
 import ExpenseSummaryCard from "../components/ExpenseSummaryCard";
 import { useEffect as useEffectUsers } from "react";
-import { CATEGORY_ICON } from "../constants/categoryIcons";
 import AddCategoryDialog from "../components/AddCategoryDialog";
 
 const API_BASE = "http://localhost:4000";
@@ -38,6 +37,7 @@ export default function MonthPage({ monthKey }) {
   const [addOpen, setAddOpen] = useState(false);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [editId, setEditId] = useState(null); // for future edit dialog
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     if (!monthKey) return;
@@ -54,6 +54,13 @@ export default function MonthPage({ monthKey }) {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [monthKey]);
+
+  //get categories
+  useEffect(() => {
+    fetch(`${API_BASE}/api/categories`)
+      .then((r) => r.json())
+      .then(setCategories);
+  }, []);
 
   const [users, setUsers] = useState([]);
   useEffectUsers(() => {
@@ -88,13 +95,14 @@ export default function MonthPage({ monthKey }) {
         <Typography color="text.secondary">No expenses this month.</Typography>
       )}
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-        <ExpenseSummaryCard items={items} title="All Users" />
+        <ExpenseSummaryCard items={items} title="All Users" categories={categories} />
         {userExpenses.map(({ user, items }) => (
           <ExpenseSummaryCard
             key={user.id}
             items={items}
             title={user.name}
             color={user.color}
+            categories={categories}
           />
         ))}
       </Stack>
@@ -102,7 +110,11 @@ export default function MonthPage({ monthKey }) {
         <Button variant="contained" onClick={() => setAddOpen(true)}>
           Add expense
         </Button>
-        <Button variant="outlined" color="secondary" onClick={() => setAddCategoryOpen(true)}>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={() => setAddCategoryOpen(true)}
+        >
           Add category
         </Button>
       </Stack>
@@ -166,14 +178,14 @@ export default function MonthPage({ monthKey }) {
                                   }}
                                 >
                                   <span style={{ fontSize: "1.2em" }}>
-                                    {CATEGORY_ICON[e.category]?.icon || "🧾"}
+                                    {categories.find(c => c.name === e.category)?.emoji || "🧾"}
                                   </span>
                                   {e.category}
                                 </span>
                               }
                               sx={{
                                 backgroundColor:
-                                  CATEGORY_ICON[e.category]?.color || "#9e9e9e",
+                                  categories.find(c => c.name === e.category)?.color || "#9e9e9e",
                                 color: "#fff",
                                 fontWeight: 700,
                                 fontSize: "1em",
