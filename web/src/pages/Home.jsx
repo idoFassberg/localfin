@@ -57,15 +57,19 @@ export default function Home() {
       .catch((e) => setError(e.message));
   }, []);
 
+  const currentMonthKey = monthKey(new Date());
   const months = useMemo(() => {
-    if (!range.minDate || !range.maxDate) return [];
-    return buildMonthRange(range.minDate, range.maxDate);
-  }, [range]);
+    if (!range.minDate || !range.maxDate) return [currentMonthKey];
+    const built = buildMonthRange(range.minDate, range.maxDate);
+    // Ensure current month is present
+    if (!built.includes(currentMonthKey)) built.unshift(currentMonthKey);
+    // Remove duplicates
+    return Array.from(new Set(built));
+  }, [range, currentMonthKey]);
 
-  const selectedMonthKey = months[tabIndex] || null;
+  const selectedMonthKey = months[tabIndex] || currentMonthKey;
 
   if (error) return <div>Error: {error}</div>;
-  if (!range.minDate) return <div>No expenses yet.</div>;
   if (!months.length) return <div>Loading...</div>;
 
   return (

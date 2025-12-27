@@ -20,6 +20,20 @@ db.exec(`
     color TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS saved_expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    paidfor TEXT NOT NULL,
+    note TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    emoji TEXT NOT NULL,
+    color TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
   CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
 `);

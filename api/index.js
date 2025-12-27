@@ -10,10 +10,6 @@ app.use(express.json());
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-app.get("/api/categories", (req, res) => {
-  res.json(CATEGORIES);
-});
-
 app.get("/api/expenses/range", (req, res) => {
   const row = db
     .prepare(`SELECT MIN(date) AS minDate, MAX(date) AS maxDate FROM expenses`)
@@ -104,7 +100,66 @@ app.put('/expenses/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Add a new saved expense
+app.post("/api/saved-expenses", (req, res) => {
+  const { category, paidfor, note = "" } = req.body;
+  if (!category || !paidfor) {
+    return res.status(400).json({ error: "Category and paidfor are required" });
+  }
+  const stmt = db.prepare(`
+    INSERT INTO saved_expenses (category, paidfor, note)
+    VALUES (?, ?, ?)
+  `);
+  const info = stmt.run(category, paidfor, note);
+  res.json({ id: info.lastInsertRowid });
+});
+// Get all saved expenses
+app.get("/api/saved-expenses", (req, res) => {
+  const rows = db.prepare("SELECT * FROM saved_expenses ORDER BY id DESC").all();
+  res.json(rows);
+});
 
+// ------------------ Category CRUD endpoints ------------------
+// Get all categories
+app.get("/api/categories", (req, res) => {
+  const rows = db.prepare("SELECT * FROM categories ORDER BY id DESC").all();
+  res.json(rows);
+});
+
+// Add a new category
+app.post("/api/categories", (req, res) => {
+  const { name, emoji, color } = req.body;
+  if (!name || !emoji || !color) {
+    return res.status(400).json({ error: "Name, emoji, and color are required" });
+  }
+  const stmt = db.prepare(`INSERT INTO categories (name, emoji, color) VALUES (?, ?, ?)`);
+  const info = stmt.run(name, emoji, color);
+  res.json({ id: info.lastInsertRowid });
+});
+
+// Update a category
+app.put("/api/categories/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, emoji, color } = req.body;
+  if (!name || !emoji || !color) {
+    return res.status(400).json({ error: "Name, emoji, and color are required" });
+  }
+  const info = db.prepare(`UPDATE categories SET name = ?, emoji = ?, color = ? WHERE id = ?`).run(name, emoji, color, id);
+  if (info.changes === 0) {
+    return res.status(404).json({ error: "Category not found" });
+  }
+  res.json({ ok: true });
+});
+
+// Delete a category
+app.delete("/api/categories/:id", (req, res) => {
+  const { id } = req.params;
+  const info = db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+  if (info.changes === 0) {
+    return res.status(404).json({ error: 'Category not found' });
+  }
+  res.json({ ok: true });
+});
 
 app.use((err, req, res, next) => {
   console.error("[UNHANDLED]", err);
