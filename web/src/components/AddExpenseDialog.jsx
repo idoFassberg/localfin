@@ -1,31 +1,3 @@
-// Add expense from saved mode
-async function handleAddFromSaved() {
-  if (!selectedSavedId) return alert("Please select a saved expense");
-  const amountNum = Number(form.amount);
-  if (!form.date || amountNum <= 0) return alert("Invalid input");
-  setSaving(true);
-  try {
-    const r = await fetch(`${API_BASE}/expenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date: form.date,
-        amount: amountNum,
-        category: form.category,
-        paidFor: form.paidFor,
-        note: form.note,
-      }),
-    });
-    if (!r.ok) {
-      alert("Failed to add expense");
-      return;
-    }
-    onAdded && onAdded();
-    onClose && onClose();
-  } finally {
-    setSaving(false);
-  }
-}
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -43,25 +15,24 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-
-
 const API_BASE = "http://localhost:4000";
 
 export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
-
-    async function handleDeleteSavedExpense(id) {
-      if (!window.confirm("Delete this saved expense?")) return;
-      const res = await fetch(`${API_BASE}/api/saved-expenses/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        // Refresh the list from the server to avoid 404s and keep in sync
-        fetch(`${API_BASE}/api/saved-expenses`)
-          .then((r) => r.json())
-          .then(setSavedExpenses)
-          .catch(() => setError("Failed to load saved expenses"));
-      } else {
-        alert("Failed to delete saved expense (may have already been deleted)");
-      }
+  async function handleDeleteSavedExpense(id) {
+    if (!window.confirm("Delete this saved expense?")) return;
+    const res = await fetch(`${API_BASE}/api/saved-expenses/${id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      // Refresh the list from the server to avoid 404s and keep in sync
+      fetch(`${API_BASE}/api/saved-expenses`)
+        .then((r) => r.json())
+        .then(setSavedExpenses)
+        .catch(() => setError("Failed to load saved expenses"));
+    } else {
+      alert("Failed to delete saved expense (may have already been deleted)");
     }
+  }
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
@@ -78,14 +49,44 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
     note: "",
   });
 
+  // Add expense from saved mode
+  async function handleAddFromSaved() {
+    if (!selectedSavedId) return alert("Please select a saved expense");
+    const se = savedExpenses.find((e) => e.id === selectedSavedId);
+    if (!se) return alert("Saved expense not found");
+    const amountNum = Number(form.amount);
+    if (!form.date || amountNum <= 0) return alert("Invalid input");
+    setSaving(true);
+    try {
+      const r = await fetch(`${API_BASE}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: form.date,
+          amount: amountNum,
+          category: se.category,
+          paidFor: se.paidfor,
+          note: se.note || "",
+        }),
+      });
+      if (!r.ok) {
+        alert("Failed to add expense");
+        return;
+      }
+      onAdded && onAdded();
+      onClose && onClose();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   // load categories and users once
   useEffect(() => {
     fetch(`${API_BASE}/api/categories`)
       .then((r) => r.json())
       .then((cats) => {
         setCategories(cats);
-        setForm((f) => ({ ...f, category: cats[0] || "" }));
-        console.log("Loaded categories:", cats);
+        setForm((f) => ({ ...f, category: cats[0]?.name || "" }));
       })
       .catch(() => setError("Failed to load categories"));
 
@@ -148,7 +149,6 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
   async function onSaveExpense() {
     if (!form.category || !form.paidFor)
       return alert("Category and Paid for are required");
-    console.log("Saving expense:", form);
     setSaving(true);
     try {
       const r = await fetch(`${API_BASE}/api/saved-expenses`, {
@@ -311,7 +311,7 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
                     setForm((f) => ({
                       ...f,
                       category: se.category,
-                      paidFor: se.paidfor,
+                      paidFor: se.paidFor,
                       note: se.note || "",
                     }));
                   }}
@@ -319,7 +319,8 @@ export default function AddExpenseDialog({ open, monthKey, onClose, onAdded }) {
                   <Box sx={{ flex: 1 }}>
                     <Typography>
                       <b>Category:</b>{" "}
-                      {se.emoji ? `${se.emoji} ${se.category}` : se.category}
+                      {/*se.emoji ? `${se.emoji} ${se.category}` : se.category*/}
+                      {se.category}
                     </Typography>
                     <Typography>
                       <b>Paid for:</b> {se.paidfor}
