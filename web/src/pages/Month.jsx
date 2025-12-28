@@ -10,6 +10,8 @@ import {
   Button,
   IconButton,
 } from "@mui/material";
+import DownloadIcon from "@mui/icons-material/Download";
+import * as XLSX from "xlsx";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddExpenseDialog from "../components/AddExpenseDialog";
@@ -74,6 +76,21 @@ export default function MonthPage({ monthKey }) {
     items: items.filter((e) => e.paid_for === user.name),
   }));
 
+  function handleExportExcel() {
+    if (!items.length) return alert("No expenses to export.");
+    const data = items.map((e) => ({
+      Date: e.date,
+      Amount: e.amount,
+      Category: e.category,
+      "Paid For": e.paid_for,
+      Note: e.note || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+    XLSX.writeFile(wb, `expenses-${monthKey || "all"}.xlsx`);
+  }
+
   async function handleDelete(id) {
     if (!window.confirm("Delete this expense?")) return;
     await fetch(`${API_BASE}/expenses/${id}`, { method: "DELETE" });
@@ -95,7 +112,11 @@ export default function MonthPage({ monthKey }) {
         <Typography color="text.secondary">No expenses this month.</Typography>
       )}
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-        <ExpenseSummaryCard items={items} title="All Users" categories={categories} />
+        <ExpenseSummaryCard
+          items={items}
+          title="All Users"
+          categories={categories}
+        />
         {userExpenses.map(({ user, items }) => (
           <ExpenseSummaryCard
             key={user.id}
@@ -116,6 +137,14 @@ export default function MonthPage({ monthKey }) {
           onClick={() => setAddCategoryOpen(true)}
         >
           Add category
+        </Button>
+        <Button
+          variant="contained"
+          color="success"
+          startIcon={<DownloadIcon />}
+          onClick={handleExportExcel}
+        >
+          Export Excel
         </Button>
       </Stack>
       <AddExpenseDialog
@@ -178,14 +207,17 @@ export default function MonthPage({ monthKey }) {
                                   }}
                                 >
                                   <span style={{ fontSize: "1.2em" }}>
-                                    {categories.find(c => c.name === e.category)?.emoji || "🧾"}
+                                    {categories.find(
+                                      (c) => c.name === e.category
+                                    )?.emoji || "🧾"}
                                   </span>
                                   {e.category}
                                 </span>
                               }
                               sx={{
                                 backgroundColor:
-                                  categories.find(c => c.name === e.category)?.color || "#9e9e9e",
+                                  categories.find((c) => c.name === e.category)
+                                    ?.color || "#9e9e9e",
                                 color: "#fff",
                                 fontWeight: 700,
                                 fontSize: "1em",
